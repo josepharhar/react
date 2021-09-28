@@ -643,3 +643,9 @@ properties[xlinkHref] = new PropertyInfoRecord(
     true, // removeEmptyString
   );
 });
+
+// These are attributes which the browser will reflect into a property of the
+// object of the same name, but possibly with different capitalization.
+const reflectedAttributes = [
+  'contentEditable',
+];

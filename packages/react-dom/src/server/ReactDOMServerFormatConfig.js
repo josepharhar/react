@@ -1139,6 +1139,14 @@ function pushStartCustomElement(
         // rendered as class on the server.
         propKey = 'class';
       }
+      if (__DEV__ && enableCustomElementPropertySupport) {
+        const reflectedGlobalProperties = [
+          'contentEditable',
+        ];
+      }
+      if (__DEV__ && enableCustomElementPropertySupport && propKey === 'contenteditable') {
+        console.warning('
+      }
       switch (propKey) {
         case 'children':
           children = propValue;
