@@ -321,7 +321,10 @@ function setInitialDOMProperties(
       // We could have excluded it in the property list instead of
       // adding a special case here, but then it wouldn't be emitted
       // on server rendering (but we *do* want to emit it in SSR).
-    } else if (registrationNameDependencies.hasOwnProperty(propKey)) {
+    } else if (
+      registrationNameDependencies.hasOwnProperty(propKey) &&
+      (!enableCustomElementPropertySupport || !isCustomComponentTag)
+    ) {
       if (nextProp != null) {
         if (__DEV__ && typeof nextProp !== 'function') {
           warnForInvalidEventListener(propKey, nextProp);
