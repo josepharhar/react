@@ -345,7 +345,6 @@ function updateDOMProperties(
   wasCustomComponentTag: boolean,
   isCustomComponentTag: boolean,
 ): void {
-  console.log('updateDOMProperties updatePayload: ' + JSON.stringify(updatePayload, null, 2));
   // TODO: Handle wasCustomComponentTag
   for (let i = 0; i < updatePayload.length; i += 2) {
     const propKey = updatePayload[i];
@@ -604,7 +603,6 @@ export function setInitialProperties(
 
 // Calculate the diff between the two objects.
 export function diffProperties(
-  // aha
   domElement: Element,
   tag: string,
   lastRawProps: Object,
@@ -771,7 +769,6 @@ export function diffProperties(
     } else if (registrationNameDependencies.hasOwnProperty(propKey)
       && (!enableCustomElementPropertySupport || !isCustomComponent(domElement.tagName, lastRawProps))
     ) {
-      console.log('registrationNameDependencies has propKey: ' + propKey);
       if (nextProp != null) {
         // We eagerly listen to this even though we haven't committed yet.
         if (__DEV__ && typeof nextProp !== 'function') {

@@ -301,9 +301,6 @@ describe('DOMPropertyOperations', () => {
 
       // Also make sure that removing and re-adding the event listener works
 
-      // TODO the onChange event listener isn't getting stored in FiberProps,
-      // so it also doesn't get removed later... we need to make it get stored in
-      // FiberProps somehow when it is set...
       ReactDOM.render(<my-custom-element />, container);
       customElement.dispatchEvent(new Event('change'));
       expect(eventHandler).toHaveBeenCalledTimes(1);

@@ -285,8 +285,6 @@ export function createInstance(
     parentNamespace,
   );
   precacheFiberNode(internalInstanceHandle, domElement);
-  console.log('createInstance calling updateFiberProps props: ' + JSON.stringify(props));
-  // the event listener is missing from the props here, we have to get it included
   updateFiberProps(domElement, props);
   return domElement;
 }
@@ -332,7 +330,6 @@ export function prepareUpdate(
       validateDOMNesting(null, string, ownAncestorInfo);
     }
   }
-  console.log('prepareUpdate returning diffProperties. oldProps and newProps: ', oldProps, newProps);
   return diffProperties(
     domElement,
     type,
@@ -445,7 +442,6 @@ export function commitUpdate(
   newProps: Props,
   internalInstanceHandle: Object,
 ): void {
-  console.log('commitUpdate. oldProps: ' + JSON.stringify(oldProps, null, 2) + '\n newProps: ' + JSON.stringify(newProps, null, 2));
   // Apply the diff to the DOM node.
   updateProperties(domElement, updatePayload, type, oldProps, newProps);
   // Update the props handle so that we know which props are the ones with
