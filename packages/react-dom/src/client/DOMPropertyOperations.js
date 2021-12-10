@@ -147,6 +147,15 @@ export function setValueForProperty(
   value: mixed,
   isCustomComponentTag: boolean,
 ) {
+  if (name === 'foo') {
+    //console.trace();
+  }
+  const asdfprops = getFiberCurrentPropsFromNode(node);
+  console.log('setValueForProperty name: ' + name + ', value: ' + value
+    + '\n  getFiberCurrentPropsFromNode: ' + JSON.stringify(asdfprops, null, 2));
+  if (name === 'foo' && !value) {
+    //console.trace();
+  }
   const propertyInfo = getPropertyInfo(name);
   if (shouldIgnoreAttribute(name, propertyInfo, isCustomComponentTag)) {
     return;
@@ -174,6 +183,7 @@ export function setValueForProperty(
     const prevProps = getFiberCurrentPropsFromNode(node);
     const prevValue = prevProps != null ? prevProps[name] : null;
     if (typeof prevValue === 'function') {
+      console.log('removing event listener! prevValue: ' + prevValue + '\n  prevProps: ' + JSON.stringify(prevProps, null, 2));
       node.removeEventListener(eventName, prevValue, useCapture);
     }
     if (typeof value === 'function') {

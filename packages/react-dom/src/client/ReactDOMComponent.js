@@ -345,6 +345,7 @@ function updateDOMProperties(
   wasCustomComponentTag: boolean,
   isCustomComponentTag: boolean,
 ): void {
+  console.log('updateDOMProperties updatePayload: ' + JSON.stringify(updatePayload, null, 2));
   // TODO: Handle wasCustomComponentTag
   for (let i = 0; i < updatePayload.length; i += 2) {
     const propKey = updatePayload[i];
@@ -603,6 +604,7 @@ export function setInitialProperties(
 
 // Calculate the diff between the two objects.
 export function diffProperties(
+  // aha
   domElement: Element,
   tag: string,
   lastRawProps: Object,
@@ -678,7 +680,10 @@ export function diffProperties(
       // Noop
     } else if (propKey === AUTOFOCUS) {
       // Noop. It doesn't work on updates anyway.
-    } else if (registrationNameDependencies.hasOwnProperty(propKey)) {
+    } else if (registrationNameDependencies.hasOwnProperty(propKey)
+      && (!enableCustomElementPropertySupport || !isCustomComponent(domElement.tagName, lastRawProps))
+      ) {
+      // o shit
       // This is a special case. If any listener updates we need to ensure
       // that the "current" fiber pointer gets updated so we need a commit
       // to update this element.
@@ -765,6 +770,7 @@ export function diffProperties(
     ) {
       // Noop
     } else if (registrationNameDependencies.hasOwnProperty(propKey)) {
+      console.log('registrationNameDependencies has propKey: ' + propKey);
       if (nextProp != null) {
         // We eagerly listen to this even though we haven't committed yet.
         if (__DEV__ && typeof nextProp !== 'function') {

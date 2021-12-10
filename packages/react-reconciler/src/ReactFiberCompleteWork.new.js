@@ -266,6 +266,8 @@ if (supportsMutation) {
     // TODO: Experiencing an error where oldProps is null. Suggests a host
     // component is hitting the resume path. Figure out why. Possibly
     // related to `hidden`.
+    // maybe this is where the missing thing gets generated?
+    console.log('updateHostComponent calling prepareUpdate. oldProps and newProps:', oldProps, newProps);
     const updatePayload = prepareUpdate(
       instance,
       type,
@@ -474,6 +476,7 @@ if (supportsMutation) {
     const currentHostContext = getHostContext();
     let updatePayload = null;
     if (oldProps !== newProps) {
+      console.log('updateHostComponent 2 calling prepareUpdate. oldProps and newProps:', oldProps, newProps);
       updatePayload = prepareUpdate(
         recyclableInstance,
         type,
