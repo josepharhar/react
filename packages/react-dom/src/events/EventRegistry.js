@@ -44,7 +44,9 @@ export function registerDirectEvent(
   registrationName: string,
   dependencies: Array<DOMEventName>,
 ) {
-  console.log('registerDirectEvent: ' + registrationName);
+  if (registrationName === 'onChange') {
+    //console.log('registerDirectEvent: ' + registrationName);
+  }
   if (__DEV__) {
     if (registrationNameDependencies[registrationName]) {
       console.error(

@@ -316,9 +316,9 @@ describe('DOMPropertyOperations', () => {
       const eventHandler = jest.fn(event => (reactInputEvent = event));
       const container = document.createElement('div');
       document.body.appendChild(container);
-      ReactDOM.render(<my-custom-element onInput={eventHandler} />, container);
+      ReactDOM.render(<span onInput={eventHandler} />, container);
 
-      const customElement = container.querySelector('my-custom-element');
+      const customElement = container.querySelector('span');
       const inputEvent = new Event('input');
       customElement.dispatchEvent(inputEvent);
 
@@ -327,11 +327,11 @@ describe('DOMPropertyOperations', () => {
 
       // Also make sure that removing and re-adding the event listener works
 
-      ReactDOM.render(<my-custom-element />, container);
+      ReactDOM.render(<span />, container);
       customElement.dispatchEvent(new Event('input'));
       expect(eventHandler).toHaveBeenCalledTimes(1);
 
-      ReactDOM.render(<my-custom-element onInput={eventHandler} />, container);
+      ReactDOM.render(<span onInput={eventHandler} />, container);
       customElement.dispatchEvent(new Event('input'));
       expect(eventHandler).toHaveBeenCalledTimes(2);
     });
