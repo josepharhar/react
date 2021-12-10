@@ -683,7 +683,6 @@ export function diffProperties(
     } else if (registrationNameDependencies.hasOwnProperty(propKey)
       && (!enableCustomElementPropertySupport || !isCustomComponent(domElement.tagName, lastRawProps))
       ) {
-      // o shit
       // This is a special case. If any listener updates we need to ensure
       // that the "current" fiber pointer gets updated so we need a commit
       // to update this element.
@@ -769,7 +768,9 @@ export function diffProperties(
       propKey === SUPPRESS_HYDRATION_WARNING
     ) {
       // Noop
-    } else if (registrationNameDependencies.hasOwnProperty(propKey)) {
+    } else if (registrationNameDependencies.hasOwnProperty(propKey)
+      && (!enableCustomElementPropertySupport || !isCustomComponent(domElement.tagName, lastRawProps))
+    ) {
       console.log('registrationNameDependencies has propKey: ' + propKey);
       if (nextProp != null) {
         // We eagerly listen to this even though we haven't committed yet.
