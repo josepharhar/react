@@ -542,8 +542,11 @@ export function dispatchEventForPluginEventSystem(
   targetInst: null | Fiber,
   targetContainer: EventTarget,
 ): void {
-  if (enableCustomElementPropertySupport && targetInst
-      && isCustomComponent(targetInst.elementType, targetInst.pendingProps)) {
+  if (
+    enableCustomElementPropertySupport &&
+    targetInst &&
+    isCustomComponent(targetInst.elementType, targetInst.pendingProps)
+  ) {
     // Don't fire events on custom elements, they have a separate event system.
     return;
   }

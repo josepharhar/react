@@ -287,11 +287,14 @@ describe('DOMPropertyOperations', () => {
       const eventHandler = jest.fn(event => (reactChangeEvent = event));
       const container = document.createElement('div');
       document.body.appendChild(container);
-      ReactDOM.render(<my-custom-element
-        foo="bar"
-        onChange={eventHandler}
-        oncustomevent={() => console.log('customevent')}
-      />, container);
+      ReactDOM.render(
+        <my-custom-element
+          foo="bar"
+          onChange={eventHandler}
+          oncustomevent={() => console.log('customevent')}
+        />,
+        container,
+      );
 
       const customElement = container.querySelector('my-custom-element');
       const changeEvent = new Event('change');
@@ -342,7 +345,10 @@ describe('DOMPropertyOperations', () => {
       const container = document.createElement('div');
       document.body.appendChild(container);
       const eventHandler = jest.fn();
-      ReactDOM.render(<my-custom-element oncustomevent={eventHandler} />, container);
+      ReactDOM.render(
+        <my-custom-element oncustomevent={eventHandler} />,
+        container,
+      );
 
       const customElement = container.querySelector('my-custom-element');
       customElement.dispatchEvent(new Event('customevent'));
@@ -352,7 +358,10 @@ describe('DOMPropertyOperations', () => {
       customElement.dispatchEvent(new Event('customevent'));
       expect(eventHandler).toHaveBeenCalledTimes(1);
 
-      ReactDOM.render(<my-custom-element oncustomevent={eventHandler} />, container);
+      ReactDOM.render(
+        <my-custom-element oncustomevent={eventHandler} />,
+        container,
+      );
       customElement.dispatchEvent(new Event('customevent'));
       expect(eventHandler).toHaveBeenCalledTimes(2);
     });
