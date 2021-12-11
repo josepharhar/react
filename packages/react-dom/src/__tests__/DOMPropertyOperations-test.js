@@ -256,6 +256,7 @@ describe('DOMPropertyOperations', () => {
       customElement.dispatchEvent(new Event('false'));
     });
 
+    // @gate enableCustomElementPropertySupport
     it('custom elements should still have onClick treated like regular elements', () => {
       let syntheticClickEvent = null;
       const syntheticEventHandler = jest.fn(
@@ -277,7 +278,7 @@ describe('DOMPropertyOperations', () => {
 
       expect(nativeEventHandler).toHaveBeenCalledTimes(1);
       expect(syntheticEventHandler).toHaveBeenCalledTimes(1);
-      expect(syntheticClickEvent.nativeEvent).toBe(nativeClickEvent);
+      expect(syntheticClickEvent).toBe(nativeClickEvent);
     });
 
     // @gate enableCustomElementPropertySupport
