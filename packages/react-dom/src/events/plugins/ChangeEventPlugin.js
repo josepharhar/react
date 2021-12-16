@@ -287,7 +287,10 @@ function extractEvents(
   }
 
   let getTargetInstFunc, handleEventFunc;
-  if (shouldUseChangeEvent(targetNode) || isCustomComponentTag) {
+  if (enableCustomElementPropertySupport && targetInst
+      && isCustomComponent(targetInst.elementType, targetInst.pendingProps)) {
+    // For custom elements, we want to always simply pass the event to its same named handler.
+  } else if (shouldUseChangeEvent(targetNode)) {
     getTargetInstFunc = getTargetInstForChangeEvent;
   } else if (isTextInputElement(((targetNode: any): HTMLElement))) {
     if (isInputEventSupported) {
