@@ -147,13 +147,6 @@ function extractEvents(
       eventSystemFlags,
       targetContainer,
     );
-  }
-  if (
-    shouldProcessPolyfillPlugins ||
-    (enableCustomElementPropertySupport &&
-      targetInst &&
-      isCustomComponent(targetInst.elementType, targetInst.pendingProps))
-  ) {
     ChangeEventPlugin.extractEvents(
       dispatchQueue,
       domEventName,
@@ -163,8 +156,6 @@ function extractEvents(
       eventSystemFlags,
       targetContainer,
     );
-  }
-  if (shouldProcessPolyfillPlugins) {
     SelectEventPlugin.extractEvents(
       dispatchQueue,
       domEventName,
