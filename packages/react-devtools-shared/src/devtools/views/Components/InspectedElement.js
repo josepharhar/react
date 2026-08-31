@@ -34,13 +34,20 @@ import useEditorURL from '../useEditorURL';
 import styles from './InspectedElement.css';
 import Tooltip from './reach-ui/tooltip';
 
-export type Props = {};
+export type Props = {
+  actionButtons?: React.Node,
+  /** fallback to show when no element is inspected */
+  fallbackEmpty: React.Node,
+};
 
 // TODO Make edits and deletes also use transition API!
 
 const noSourcePromise = Promise.resolve(null);
 
-export default function InspectedElementWrapper(_: Props): React.Node {
+export default function InspectedElementWrapper({
+  actionButtons,
+  fallbackEmpty,
+}: Props): React.Node {
   const {inspectedElementID} = useContext(TreeStateContext);
   const bridge = useContext(BridgeContext);
   const store = useContext(StoreContext);
@@ -189,12 +196,13 @@ export default function InspectedElementWrapper(_: Props): React.Node {
     return (
       <div className={styles.InspectedElement}>
         <div className={styles.TitleRow} />
+        <div className={styles.NoInspectionFallback}>{fallbackEmpty}</div>
       </div>
     );
   }
 
   let strictModeBadge = null;
-  if (element.isStrictModeNonCompliant) {
+  if (element.isStrictModeNonCompliant && element.parentID !== 0) {
     strictModeBadge = (
       <Tooltip label="This component is not running in StrictMode. Click to learn more.">
         <a
@@ -237,7 +245,7 @@ export default function InspectedElementWrapper(_: Props): React.Node {
         <div className={styles.SelectedComponentName}>
           <div
             className={
-              element.isStrictModeNonCompliant
+              element.isStrictModeNonCompliant && element.parentID !== 0
                 ? `${styles.ComponentName} ${styles.StrictModeNonCompliantComponentName}`
                 : styles.ComponentName
             }
@@ -269,18 +277,21 @@ export default function InspectedElementWrapper(_: Props): React.Node {
             <ButtonIcon type="error" />
           </Toggle>
         )}
-        {canToggleSuspense && (
+        {canToggleSuspense || isSuspended ? (
           <Toggle
             isChecked={isSuspended}
+            isDisabled={!canToggleSuspense}
             onChange={toggleSuspended}
             title={
               isSuspended
-                ? 'Unsuspend the selected component'
+                ? canToggleSuspense
+                  ? 'Unsuspend the selected component'
+                  : 'This boundary is still suspended'
                 : 'Suspend the selected component'
             }>
             <ButtonIcon type="suspend" />
           </Toggle>
-        )}
+        ) : null}
         {store.supportsInspectMatchingDOMElement && (
           <Button
             onClick={highlightElement}
@@ -301,6 +312,13 @@ export default function InspectedElementWrapper(_: Props): React.Node {
             source={source}
             symbolicatedSourcePromise={symbolicatedSourcePromise}
           />
+        )}
+
+        {actionButtons && (
+          <>
+            <div className={styles.VRule} />
+            {actionButtons}
+          </>
         )}
       </div>
 

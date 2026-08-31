@@ -21,6 +21,7 @@ import {
   startWork as startFlightWork,
   startFlowing as startFlightFlowing,
   abort as abortFlight,
+  attachAbortSignal as attachFlightAbortSignal,
 } from 'react-server/src/ReactFlightServer';
 
 import {
@@ -36,6 +37,7 @@ import {
   startWork as startFizzWork,
   startFlowing as startFizzFlowing,
   abort as abortFizz,
+  attachAbortSignal as attachFizzAbortSignal,
 } from 'react-server/src/ReactFizzServer';
 
 import {
@@ -89,8 +91,12 @@ export function experimental_renderToHTML(
       noServerCallOrFormAction,
       undefined,
       undefined,
+      false,
       undefined,
       false,
+      undefined,
+      undefined,
+      undefined,
     );
     const streamState = createFlightStreamState(flightResponse, null);
     const flightDestination = {
@@ -175,7 +181,7 @@ export function experimental_renderToHTML(
       }
     }
     const flightRequest = createFlightRequest(
-      // $FlowFixMe: This should be a subtype but not everything is typed covariant.
+      // $FlowFixMe[incompatible-type]: This should be a subtype but not everything is typed covariant.
       children,
       null,
       handleFlightError,
@@ -192,7 +198,7 @@ export function experimental_renderToHTML(
     );
     const root = getFlightRoot<ReactNodeList>(flightResponse);
     const fizzRequest = createFizzRequest(
-      // $FlowFixMe: Thenables as children are supported.
+      // $FlowFixMe[incompatible-type]: Thenables as children are supported.
       root,
       resumableState,
       createRenderState(
@@ -213,19 +219,10 @@ export function experimental_renderToHTML(
       undefined,
       undefined,
     );
-    if (options && options.signal) {
-      const signal = options.signal;
-      if (signal.aborted) {
-        abortFlight(flightRequest, (signal: any).reason);
-        abortFizz(fizzRequest, (signal: any).reason);
-      } else {
-        const listener = () => {
-          abortFlight(flightRequest, (signal: any).reason);
-          abortFizz(fizzRequest, (signal: any).reason);
-          signal.removeEventListener('abort', listener);
-        };
-        signal.addEventListener('abort', listener);
-      }
+    const signal = options ? options.signal : undefined;
+    if (signal) {
+      attachFlightAbortSignal(flightRequest, signal);
+      attachFizzAbortSignal(fizzRequest, signal);
     }
     startFlightWork(flightRequest);
     startFlightFlowing(flightRequest, flightDestination);

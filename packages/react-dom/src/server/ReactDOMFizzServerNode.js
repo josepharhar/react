@@ -11,7 +11,6 @@ import type {
   Request,
   PostponedState,
   ErrorInfo,
-  PostponeInfo,
 } from 'react-server/src/ReactFizzServer';
 import type {ReactNodeList, ReactFormState} from 'shared/ReactTypes';
 import type {Writable} from 'stream';
@@ -31,6 +30,7 @@ import {
   startFlowing,
   stopFlowing,
   abort,
+  attachAbortSignal,
   prepareForStartFlowingIfBeforeAllReady,
 } from 'react-server/src/ReactFizzServer';
 
@@ -77,7 +77,7 @@ type Options = {
   onShellError?: (error: mixed) => void,
   onAllReady?: () => void,
   onError?: (error: mixed, errorInfo: ErrorInfo) => ?string,
-  onPostpone?: (reason: string, postponeInfo: PostponeInfo) => void,
+  onBrowserBailout?: (error: mixed, errorInfo: ErrorInfo) => void,
   unstable_externalRuntimeSrc?: string | BootstrapScriptDescriptor,
   importMap?: ImportMap,
   formState?: ReactFormState<any, any> | null,
@@ -91,7 +91,7 @@ type ResumeOptions = {
   onShellError?: (error: mixed) => void,
   onAllReady?: () => void,
   onError?: (error: mixed, errorInfo: ErrorInfo) => ?string,
-  onPostpone?: (reason: string, postponeInfo: PostponeInfo) => void,
+  onBrowserBailout?: (error: mixed, errorInfo: ErrorInfo) => void,
 };
 
 type PipeableStream = {
@@ -123,11 +123,11 @@ function createRequestImpl(children: ReactNodeList, options: void | Options) {
     createRootFormatContext(options ? options.namespaceURI : undefined),
     options ? options.progressiveChunkSize : undefined,
     options ? options.onError : undefined,
+    options ? options.onBrowserBailout : undefined,
     options ? options.onAllReady : undefined,
     options ? options.onShellReady : undefined,
     options ? options.onShellError : undefined,
     undefined,
-    options ? options.onPostpone : undefined,
     options ? options.formState : undefined,
   );
 }
@@ -174,7 +174,7 @@ function createFakeWritableFromReadableStreamController(
 ): Writable {
   // The current host config expects a Writable so we create
   // a fake writable for now to push into the Readable.
-  return ({
+  return {
     write(chunk: string | Uint8Array) {
       if (typeof chunk === 'string') {
         chunk = textEncoder.encode(chunk);
@@ -195,7 +195,7 @@ function createFakeWritableFromReadableStreamController(
         controller.close();
       }
     },
-  }: any);
+  } as any;
 }
 
 // TODO: Move to sub-classing ReadableStream.
@@ -222,7 +222,7 @@ function renderToReadableStream(
 
     function onShellReady() {
       let writable: Writable;
-      const stream: ReactDOMServerReadableStream = (new ReadableStream(
+      const stream: ReactDOMServerReadableStream = new ReadableStream(
         {
           type: 'bytes',
           start: (controller): ?Promise<void> => {
@@ -238,8 +238,9 @@ function renderToReadableStream(
           },
         },
         // $FlowFixMe[prop-missing] size() methods are not allowed on byte streams.
+        // $FlowFixMe[incompatible-type]
         {highWaterMark: 0},
-      ): any);
+      ) as any;
       // TODO: Move to sub-classing ReadableStream.
       stream.allReady = allReady;
       resolve(stream);
@@ -281,24 +282,15 @@ function renderToReadableStream(
       createRootFormatContext(options ? options.namespaceURI : undefined),
       options ? options.progressiveChunkSize : undefined,
       options ? options.onError : undefined,
+      options ? options.onBrowserBailout : undefined,
       onAllReady,
       onShellReady,
       onShellError,
       onFatalError,
-      options ? options.onPostpone : undefined,
       options ? options.formState : undefined,
     );
     if (options && options.signal) {
-      const signal = options.signal;
-      if (signal.aborted) {
-        abort(request, (signal: any).reason);
-      } else {
-        const listener = () => {
-          abort(request, (signal: any).reason);
-          signal.removeEventListener('abort', listener);
-        };
-        signal.addEventListener('abort', listener);
-      }
+      attachAbortSignal(request, options.signal);
     }
     startWork(request);
   });
@@ -317,11 +309,11 @@ function resumeRequestImpl(
       options ? options.nonce : undefined,
     ),
     options ? options.onError : undefined,
+    options ? options.onBrowserBailout : undefined,
     options ? options.onAllReady : undefined,
     options ? options.onShellReady : undefined,
     options ? options.onShellError : undefined,
     undefined,
-    options ? options.onPostpone : undefined,
   );
 }
 
@@ -382,7 +374,7 @@ function resume(
 
     function onShellReady() {
       let writable: Writable;
-      const stream: ReactDOMServerReadableStream = (new ReadableStream(
+      const stream: ReactDOMServerReadableStream = new ReadableStream(
         {
           type: 'bytes',
           start: (controller): ?Promise<void> => {
@@ -398,8 +390,9 @@ function resume(
           },
         },
         // $FlowFixMe[prop-missing] size() methods are not allowed on byte streams.
+        // $FlowFixMe[incompatible-type]
         {highWaterMark: 0},
-      ): any);
+      ) as any;
       // TODO: Move to sub-classing ReadableStream.
       stream.allReady = allReady;
       resolve(stream);
@@ -419,23 +412,14 @@ function resume(
         options ? options.nonce : undefined,
       ),
       options ? options.onError : undefined,
+      options ? options.onBrowserBailout : undefined,
       onAllReady,
       onShellReady,
       onShellError,
       onFatalError,
-      options ? options.onPostpone : undefined,
     );
     if (options && options.signal) {
-      const signal = options.signal;
-      if (signal.aborted) {
-        abort(request, (signal: any).reason);
-      } else {
-        const listener = () => {
-          abort(request, (signal: any).reason);
-          signal.removeEventListener('abort', listener);
-        };
-        signal.addEventListener('abort', listener);
-      }
+      attachAbortSignal(request, options.signal);
     }
     startWork(request);
   });

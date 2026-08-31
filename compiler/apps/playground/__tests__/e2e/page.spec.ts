@@ -237,7 +237,7 @@ test('show internals button toggles correctly', async ({page}) => {
 test('error is displayed when config has syntax error', async ({page}) => {
   const store: Store = {
     source: TEST_SOURCE,
-    config: `compilationMode: `,
+    config: `{ compilationMode: }`,
     showInternals: false,
   };
   const hash = encodeStore(store);
@@ -254,17 +254,17 @@ test('error is displayed when config has syntax error', async ({page}) => {
   const output = text.join('');
 
   // Remove hidden chars
-  expect(output.replace(/\s+/g, ' ')).toContain('Invalid override format');
+  expect(output.replace(/\s+/g, ' ')).toContain(
+    'Unexpected failure when transforming configs',
+  );
 });
 
 test('error is displayed when config has validation error', async ({page}) => {
   const store: Store = {
     source: TEST_SOURCE,
-    config: `import type { PluginOptions } from 'babel-plugin-react-compiler/dist';
-
-({
+    config: `{
   compilationMode: "123"
-} satisfies PluginOptions);`,
+}`,
     showInternals: false,
   };
   const hash = encodeStore(store);
@@ -283,35 +283,34 @@ test('error is displayed when config has validation error', async ({page}) => {
   expect(output.replace(/\s+/g, ' ')).toContain('Unexpected compilationMode');
 });
 
-test('disableMemoizationForDebugging flag works as expected', async ({
-  page,
-}) => {
+test('error is displayed when source has syntax error', async ({page}) => {
+  const syntaxErrorSource = `function TestComponent(props) {
+  const oops = props.
+  return (
+    <>{oops}</>
+  );
+}`;
   const store: Store = {
-    source: TEST_SOURCE,
-    config: `import type { PluginOptions } from 'babel-plugin-react-compiler/dist';
-
-({
-  environment: {
-    disableMemoizationForDebugging: true
-  }
-} satisfies PluginOptions);`,
+    source: syntaxErrorSource,
+    config: defaultConfig,
     showInternals: false,
   };
   const hash = encodeStore(store);
-  await page.goto(`/#${hash}`, {waitUntil: 'networkidle'});
+  await page.goto(`/#${hash}`);
   await page.waitForFunction(isMonacoLoaded);
   await expandConfigs(page);
   await page.screenshot({
     fullPage: true,
-    path: 'test-results/07-config-disableMemoizationForDebugging-flag.png',
+    path: 'test-results/08-source-syntax-error.png',
   });
 
   const text =
     (await page.locator('.monaco-editor-output').allInnerTexts()) ?? [];
-  const output = await formatPrint(text);
+  const output = text.join('');
 
-  expect(output).not.toEqual('');
-  expect(output).toMatchSnapshot('disableMemoizationForDebugging-output.txt');
+  expect(output.replace(/\s+/g, ' ')).toContain(
+    'Expected identifier to be defined before being used',
+  );
 });
 
 TEST_CASE_INPUTS.forEach((t, idx) =>

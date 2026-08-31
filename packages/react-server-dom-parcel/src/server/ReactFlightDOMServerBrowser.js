@@ -12,6 +12,7 @@ import type {
   ReactClientValue,
 } from 'react-server/src/ReactFlightServer';
 import type {ReactFormState, Thenable} from 'shared/ReactTypes';
+
 import {
   preloadModule,
   requireModule,
@@ -28,6 +29,7 @@ import {
   startFlowingDebug,
   stopFlowing,
   abort,
+  attachAbortSignal,
   resolveDebugMessage,
   closeDebugChannel,
 } from 'react-server/src/ReactFlightServer';
@@ -67,7 +69,7 @@ type Options = {
   signal?: AbortSignal,
   temporaryReferences?: TemporaryReferenceSet,
   onError?: (error: mixed) => void,
-  onPostpone?: (reason: string) => void,
+  startTime?: number,
 };
 
 function startReadingFromDebugChannelReadableStream(
@@ -85,7 +87,7 @@ function startReadingFromDebugChannelReadableStream(
     value: ?any,
     ...
   }): void | Promise<void> {
-    const buffer: Uint8Array = (value: any);
+    const buffer: Uint8Array = value as any;
     stringBuffer += done
       ? readFinalStringChunk(stringDecoder, new Uint8Array(0))
       : readPartialStringChunk(stringDecoder, buffer);
@@ -128,23 +130,14 @@ export function renderToReadableStream(
     null,
     options ? options.onError : undefined,
     options ? options.identifierPrefix : undefined,
-    options ? options.onPostpone : undefined,
     options ? options.temporaryReferences : undefined,
+    options ? options.startTime : undefined,
     __DEV__ && options ? options.environmentName : undefined,
     __DEV__ && options ? options.filterStackFrame : undefined,
     debugChannelReadable !== undefined,
   );
   if (options && options.signal) {
-    const signal = options.signal;
-    if (signal.aborted) {
-      abort(request, (signal: any).reason);
-    } else {
-      const listener = () => {
-        abort(request, (signal: any).reason);
-        signal.removeEventListener('abort', listener);
-      };
-      signal.addEventListener('abort', listener);
-    }
+    attachAbortSignal(request, options.signal);
   }
   if (debugChannelWritable !== undefined) {
     const debugStream = new ReadableStream(
@@ -155,6 +148,7 @@ export function renderToReadableStream(
         },
       },
       // $FlowFixMe[prop-missing] size() methods are not allowed on byte streams.
+      // $FlowFixMe[incompatible-type]
       {highWaterMark: 0},
     );
     debugStream.pipeTo(debugChannelWritable);
@@ -177,6 +171,7 @@ export function renderToReadableStream(
       },
     },
     // $FlowFixMe[prop-missing] size() methods are not allowed on byte streams.
+    // $FlowFixMe[incompatible-type]
     {highWaterMark: 0},
   );
   return stream;
@@ -205,6 +200,7 @@ export function prerender(
           },
         },
         // $FlowFixMe[prop-missing] size() methods are not allowed on byte streams.
+        // $FlowFixMe[incompatible-type]
         {highWaterMark: 0},
       );
       resolve({prelude: stream});
@@ -216,25 +212,14 @@ export function prerender(
       onFatalError,
       options ? options.onError : undefined,
       options ? options.identifierPrefix : undefined,
-      options ? options.onPostpone : undefined,
       options ? options.temporaryReferences : undefined,
+      options ? options.startTime : undefined,
       __DEV__ && options ? options.environmentName : undefined,
       __DEV__ && options ? options.filterStackFrame : undefined,
       false,
     );
     if (options && options.signal) {
-      const signal = options.signal;
-      if (signal.aborted) {
-        const reason = (signal: any).reason;
-        abort(request, reason);
-      } else {
-        const listener = () => {
-          const reason = (signal: any).reason;
-          abort(request, reason);
-          signal.removeEventListener('abort', listener);
-        };
-        signal.addEventListener('abort', listener);
-      }
+      attachAbortSignal(request, options.signal);
     }
     startWork(request);
   });
@@ -248,7 +233,10 @@ export function registerServerActions(manifest: ServerManifest) {
 
 export function decodeReply<T>(
   body: string | FormData,
-  options?: {temporaryReferences?: TemporaryReferenceSet},
+  options?: {
+    temporaryReferences?: TemporaryReferenceSet,
+    arraySizeLimit?: number,
+  },
 ): Thenable<T> {
   if (typeof body === 'string') {
     const form = new FormData();
@@ -260,6 +248,7 @@ export function decodeReply<T>(
     '',
     options ? options.temporaryReferences : undefined,
     body,
+    options ? options.arraySizeLimit : undefined,
   );
   const root = getRoot<T>(response);
   close(response);

@@ -6,7 +6,6 @@
  */
 
 import MonacoEditor, {loader, type Monaco} from '@monaco-editor/react';
-import {PluginOptions} from 'babel-plugin-react-compiler';
 import type {editor} from 'monaco-editor';
 import * as monaco from 'monaco-editor';
 import React, {
@@ -18,30 +17,27 @@ import React, {
 } from 'react';
 import {Resizable} from 're-resizable';
 import {useStore, useStoreDispatch} from '../StoreContext';
-import {monacoOptions} from './monacoOptions';
+import {monacoConfigOptions} from './monacoOptions';
 import {IconChevron} from '../Icons/IconChevron';
-import prettyFormat from 'pretty-format';
 import {CONFIG_PANEL_TRANSITION} from '../../lib/transitionTypes';
-
-// @ts-expect-error - webpack asset/source loader handles .d.ts files as strings
-import compilerTypeDefs from 'babel-plugin-react-compiler/dist/index.d.ts';
 
 loader.config({monaco});
 
 export default function ConfigEditor({
-  appliedOptions,
+  formattedAppliedConfig,
 }: {
-  appliedOptions: PluginOptions | null;
+  formattedAppliedConfig: string;
 }): React.ReactElement {
   const [isExpanded, setIsExpanded] = useState(false);
 
+  // TODO: Add back <Activity> after upgrading next.js
   return (
-    // TODO: Use <Activity> when it is compatible with Monaco: https://github.com/suren-atoyan/monaco-react/issues/753
     <>
       <div
         style={{
           display: isExpanded ? 'block' : 'none',
         }}>
+        {/* <Activity mode={isExpanded ? 'visible' : 'hidden'}> */}
         <ExpandedEditor
           onToggle={() => {
             startTransition(() => {
@@ -49,13 +45,15 @@ export default function ConfigEditor({
               setIsExpanded(false);
             });
           }}
-          appliedOptions={appliedOptions}
+          formattedAppliedConfig={formattedAppliedConfig}
         />
       </div>
       <div
         style={{
           display: !isExpanded ? 'block' : 'none',
         }}>
+        {/* </Activity>
+        <Activity mode={isExpanded ? 'hidden' : 'visible'}></Activity> */}
         <CollapsedEditor
           onToggle={() => {
             startTransition(() => {
@@ -65,16 +63,17 @@ export default function ConfigEditor({
           }}
         />
       </div>
+      {/* </Activity> */}
     </>
   );
 }
 
 function ExpandedEditor({
   onToggle,
-  appliedOptions,
+  formattedAppliedConfig,
 }: {
-  onToggle: () => void;
-  appliedOptions: PluginOptions | null;
+  onToggle: (expanded: boolean) => void;
+  formattedAppliedConfig: string;
 }): React.ReactElement {
   const store = useStore();
   const dispatchStore = useStoreDispatch();
@@ -103,35 +102,18 @@ function ExpandedEditor({
     _: editor.IStandaloneCodeEditor,
     monaco: Monaco,
   ) => void = (_, monaco) => {
-    // Add the babel-plugin-react-compiler type definitions to Monaco
-    monaco.languages.typescript.typescriptDefaults.addExtraLib(
-      //@ts-expect-error - compilerTypeDefs is a string
-      compilerTypeDefs,
-      'file:///node_modules/babel-plugin-react-compiler/dist/index.d.ts',
-    );
-    monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
-      target: monaco.languages.typescript.ScriptTarget.Latest,
-      allowNonTsExtensions: true,
-      moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
-      module: monaco.languages.typescript.ModuleKind.ESNext,
-      noEmit: true,
-      strict: false,
-      esModuleInterop: true,
-      allowSyntheticDefaultImports: true,
-      jsx: monaco.languages.typescript.JsxEmit.React,
+    // Enable comments in JSON for JSON5-style config
+    monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+      allowComments: true,
+      trailingCommas: 'ignore',
     });
   };
-
-  const formattedAppliedOptions = appliedOptions
-    ? prettyFormat(appliedOptions, {
-        printFunctionName: false,
-        printBasicPrototype: false,
-      })
-    : 'Invalid configs';
 
   return (
     <ViewTransition
       update={{[CONFIG_PANEL_TRANSITION]: 'slide-in', default: 'none'}}>
+      {/* enter={{[CONFIG_PANEL_TRANSITION]: 'slide-in', default: 'none'}}
+      exit={{[CONFIG_PANEL_TRANSITION]: 'slide-out', default: 'none'}}> */}
       <Resizable
         minWidth={300}
         maxWidth={600}
@@ -158,25 +140,16 @@ function ExpandedEditor({
                 Config Overrides
               </h2>
             </div>
-            <div className="flex-1 rounded-lg overflow-hidden border border-gray-300">
+            <div className="flex-1 border border-gray-300">
               <MonacoEditor
-                path={'config.ts'}
-                language={'typescript'}
+                path={'config.json5'}
+                language={'json'}
                 value={store.config}
                 onMount={handleMount}
                 onChange={handleChange}
                 loading={''}
                 className="monaco-editor-config"
-                options={{
-                  ...monacoOptions,
-                  lineNumbers: 'off',
-                  renderLineHighlight: 'none',
-                  overviewRulerBorder: false,
-                  overviewRulerLanes: 0,
-                  fontSize: 12,
-                  scrollBeyondLastLine: false,
-                  glyphMargin: false,
-                }}
+                options={monacoConfigOptions}
               />
             </div>
           </div>
@@ -186,23 +159,16 @@ function ExpandedEditor({
                 Applied Configs
               </h2>
             </div>
-            <div className="flex-1 rounded-lg overflow-hidden border border-gray-300">
+            <div className="flex-1 border border-gray-300">
               <MonacoEditor
                 path={'applied-config.js'}
                 language={'javascript'}
-                value={formattedAppliedOptions}
+                value={formattedAppliedConfig}
                 loading={''}
                 className="monaco-editor-applied-config"
                 options={{
-                  ...monacoOptions,
-                  lineNumbers: 'off',
-                  renderLineHighlight: 'none',
-                  overviewRulerBorder: false,
-                  overviewRulerLanes: 0,
-                  fontSize: 12,
-                  scrollBeyondLastLine: false,
+                  ...monacoConfigOptions,
                   readOnly: true,
-                  glyphMargin: false,
                 }}
               />
             </div>
